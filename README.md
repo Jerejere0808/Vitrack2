@@ -6,7 +6,10 @@ python detect.py --weights yolov7.pt --conf 0.25 --img-size 640
 --source 為串流來源 (videos.txt 裡面放 video 的檔案路徑)
 --camera_num 為監視器數量 (需跟videos.txt的串流來源數量一致)
 
-需另外下載 re id 和 MEBOE 資料夾並解壓縮
+需另外下載 videos, re id 和 MEBOE 資料夾並解壓縮
+
+videos 連結:
+https://drive.google.com/file/d/1f4Aba-iVgqYi7bTFUJ4vUTlfINjIHc_b/view?usp=sharing
 
 re id 連結:
 https://drive.google.com/file/d/12O8SRJhwJBKCIbIDegetJTa-X3B0Ejmn/view?usp=drive_link
