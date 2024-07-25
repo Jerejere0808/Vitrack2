@@ -214,7 +214,7 @@ def detect(cfg, reid_cfg, save_img=True):
 
     # ---------IMU---------
     fps_count = 0
-    imu_dataset = IMU_Dataset("IMU\\IMU_DATA\\test4\\handover.csv")
+    imu_dataset = IMU_Dataset("IMU\\IMU_DATA\\test4\\deviate.csv")
     imu_t = time.time()
     imu_data = {"user1":0}
     north_ori = [340, 160, 340]
