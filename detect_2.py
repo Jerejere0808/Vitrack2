@@ -28,16 +28,6 @@ from tactile_parameter import tactile_parameter
 from handover_paramter import check_handover_imu, get_handover_bounds, check_yaw_range, handover_condition
 from perspective_transformation import location_transfomation, zone_transfomation, test_in_transform_range, get_transformation_bound
 
-# BLE
-from BLE.lib.models import get_model
-from BLE.lib.config import cfg, update_config
-from BLE.lib.utils import save_checkpoint, get_optimizer, create_logger,\
-    check_side, check_in_range, check_in_range_eq, get_acceptable_range, get_corrected_direction, ParticleFilter, ParticleFilter_v2
-from BLE.lib.datasets import RSSI_Dataset, RSSI_DatasetForTest
-
-#MEBOW
-from MEBOW.lib.models import get_pose_net
-
 # Re_id
 from re_id.utils import load_network, fuse_all_conv_bn
 from re_id.model import ft_net, ft_net_dense, ft_net_hr, ft_net_swin, ft_net_swinv2, ft_net_efficient, ft_net_NAS, ft_net_convnext, ft_net_cbam
@@ -64,7 +54,7 @@ frame_times = []
 global average_frame_time 
 deactivate_time = 0
 
-def detect(cfg, reid_cfg, save_img=True):
+def detect(reid_cfg, save_img=True):
     source, camera_num, weights, view_img, save_txt, imgsz, trace = opt.source, opt.camera_num,opt.weights, opt.view_img, opt.save_txt, opt.img_size, not opt.no_trace
     average_frame_time = 0.15
     
@@ -141,31 +131,6 @@ def detect(cfg, reid_cfg, save_img=True):
     user_features_fusion_confidence = {}
     # ---------handover---------
 
-    '''
-    # ---------MEBOW---------
-    # Load MEBOW Model
-    mebow_model = get_pose_net(cfg, False)
-    
-    # Load Pretrained Weights
-    checkpoint_file2 = os.path.join(cfg.MODEL.MEBOW_PRETRAINED)
-    if os.path.exists(checkpoint_file2):
-        checkpoint2 = torch.load(checkpoint_file2)
-        mebow_model.load_state_dict(checkpoint2)
-    mebow_model = torch.nn.DataParallel(mebow_model).cuda()
-
-    # Data loading code
-    normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
-    )
-    # Data Preprocessing
-    transform = transforms.Compose(
-        [transforms.ToTensor(), transforms.Resize([256,192]), normalize]
-    )
-    # testing
-    mebow_model.eval()
-    # ---------MEBOW---------
-    '''
-    
     # ---------Re_id---------
     print(reid_cfg)
     if reid_cfg.use_dense:
@@ -513,17 +478,6 @@ def detect(cfg, reid_cfg, save_img=True):
                                     yaw = imu_data[match_key]
                                     orientation =  -1 * yaw if yaw < 0 else 360 - yaw
                                     orientation = int((orientation - north_ori[camera_index]) % 360)
-                                
-                                '''
-                                #MEBOW判斷人體方向
-                                cropobj = img_ori[int(xyxy[1]):int(xyxy[3]),int(xyxy[0]):int(xyxy[2])]
-                                crop_img = transform(cropobj)
-                                crop_img = crop_img[np.newaxis,:,:,:]
-
-                                output, hoe = mebow_model(crop_img)
-                                orientation = hoe.detach().cpu().numpy()
-                                orientation = 5*np.argmax(orientation)
-                                '''
 
                                 #re id 取出目標特徵
                                 cropobj = img_ori[int(xyxy[1]):int(xyxy[3]),int(xyxy[0]):int(xyxy[2])]
@@ -756,27 +710,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--no-trace', action='store_true', help='don`t trace model')
-    #BLE
-    parser.add_argument('--cfg',
-                        help='experiment configure file name',
-                        required=False,
-                        type=str)
-
-    # optional
-    parser.add_argument('--beforeDir',
-                        help='File path of the csv before preprocessing',
-                        type=str,
-                        default='')
-
-    parser.add_argument('--afterDir',
-                        help='File path of the csv after preprocessing',
-                        type=str,
-                        default='')
-
-    parser.add_argument('--timestep',
-                        help='set time step',
-                        type=int,
-                        default=0)
+    
     #re id
     parser.add_argument('--gpu_ids',default='0', type=str,help='gpu_ids: e.g. 0  0,1,2  0,2')
     parser.add_argument('--reid_name', default='ft_ResNet50', type=str, help='save model path')
@@ -793,7 +727,6 @@ if __name__ == '__main__':
     opt = parser.parse_args()
     print(opt)
 
-    #update_config(cfg, opt) #Vitrack BLE 的東西，用不到 
     update_reid_config(reid_cfg, opt) #re_id
 
     #check_requirements(exclude=('pycocotools', 'thop'))
@@ -804,4 +737,4 @@ if __name__ == '__main__':
                 detect()
                 strip_optimizer(opt.weights)
         else:
-            detect(cfg, reid_cfg)
+            detect(reid_cfg)
