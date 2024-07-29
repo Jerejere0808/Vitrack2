@@ -123,10 +123,14 @@ def detect(cfg, reid_cfg, save_img=True):
     old_img_b = 1
 
     # ---------handover---------
-    #應該要出現的users，但尚未發現
+    #應該要出現的users，但尚未發現，每個camera一個dict，每個dict的內容代表此camera畫面中預測之後會出現的使用者
+    #key為user名稱，value為user的資訊
+    #ex: finding_users[1] = {'user1': [1, 0, 200]} 代表camera 1 畫面中之後可能會出現一個名為user1的使用者，從camera 0 來，最多等待200幀看看有沒有出現
     finding_users = [{} for _ in range(camera_num)]
 
-    #已經找到的users
+    #已經找到的users，每個camera一個dict，每個dict的內容代表此camera畫面中的使用者資訊
+    #key為user名稱，value為user的資訊
+    #ex: finded_users[0] = {'user1': [962, 415, 36, 98, 28, 352]} 代表camera 0 畫面中有一個名為user1的使用者，座標為(962, 415)，寬高為36, 98，yaw為28，orientation為352
     finded_users = [{} for _ in range(camera_num)]
 
     #待確認的handover使用者
@@ -269,7 +273,6 @@ def detect(cfg, reid_cfg, save_img=True):
                 #把user加入下一個監視器的finding_users
                 finding_users[next_camera][user] = [next_camera, cur_camera, waiting_times]
                 dataset.activate_camera(next_camera)
-                print("handover time: ", time.time() - deactivate_time)
                 print("activate_camera: ", next_camera)
             handover_list = []
 
@@ -525,7 +528,6 @@ def detect(cfg, reid_cfg, save_img=True):
                                 user_features[match_key] = feature
                                 
                                 finded_users[camera_index][match_key] = [bottom_mid[0], bottom_mid[1], w_and_h[0], w_and_h[1], yaw, orientation]
-
                                 #re id 配對到的話，把finding_users中的資料刪除                        
                                 if match_key in finding_users[camera_index]:
                                     del finding_users[camera_index][match_key]
