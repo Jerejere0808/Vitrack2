@@ -1,7 +1,6 @@
 # **執行指令**
 
-python detect.py --weights yolov7.pt --conf 0.25 --img-size 640
---source videos.txt --cfg BLE\config\U19e_outdoor0805test2_3.yaml  --camera_num 1
+python detect.py --weights yolov7.pt --conf 0.25 --img-size 640 --source videos.txt --camera_num 1
 
 --source 為串流來源 (videos.txt 裡面放 video 的檔案路徑)
 --camera_num 為監視器數量 (需跟videos.txt的串流來源數量一致)

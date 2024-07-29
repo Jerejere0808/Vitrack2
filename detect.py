@@ -145,6 +145,7 @@ def detect(cfg, reid_cfg, save_img=True):
     user_features_fusion_confidence = {}
     # ---------handover---------
 
+    '''
     # ---------MEBOW---------
     # Load MEBOW Model
     mebow_model = get_pose_net(cfg, False)
@@ -167,6 +168,7 @@ def detect(cfg, reid_cfg, save_img=True):
     # testing
     mebow_model.eval()
     # ---------MEBOW---------
+    '''
 
     # ---------Re_id---------
     print(reid_cfg)
@@ -744,7 +746,7 @@ if __name__ == '__main__':
     #BLE
     parser.add_argument('--cfg',
                         help='experiment configure file name',
-                        required=True,
+                        required=False,
                         type=str)
 
     # optional
@@ -777,7 +779,8 @@ if __name__ == '__main__':
 
     opt = parser.parse_args()
     print(opt)
-    update_config(cfg, opt) #BLE
+
+    #update_config(cfg, opt) #Vitrack BLE 的東西，用不到  
     update_reid_config(reid_cfg, opt) #re_id
 
     #check_requirements(exclude=('pycocotools', 'thop'))
