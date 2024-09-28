@@ -47,7 +47,7 @@ def convert_x_to_bbox(x,score=None):
     else:
         return np.array([x[0]-w/2.,x[1]-h/2.,x[0]+w/2.,x[1]+h/2.,score]).reshape((1,5))
     
-
+# 一個tracker用來追蹤一個使用者
 class KalmanBoxTracker(object):
 
   count = 0
@@ -110,8 +110,13 @@ class KalmanTrack(object):
         self.trks = []
         self.dets = []
 
+    #因為之後要建立一個使用者和行人的IOU矩陣，矩陣的每個column index代表一個使用者
+    #所以要建立一個index2users和一個users2index來對應矩陣的column index和detect.py中的使用者名稱
+    #index2users是一個list，index是矩陣的column index，value是使用者的名稱
+    #users2index是一個dictionary，key是使用者的名稱，value是矩陣的column index
     def build_index2users(self, cur_finded_users):
         
+        #更新index2users和users2index，如果有使用者不在cur_finded_users裡，就把這個使用者刪掉
         del_users = set(self.finded_users.keys()) - set(cur_finded_users.keys())
         for del_user in del_users:
             del_index = self.users2index[del_user]
@@ -123,34 +128,50 @@ class KalmanTrack(object):
             self.users2index[self.index2users[i]] = i
 
         new_users = set(cur_finded_users.keys()) - set(self.finded_users.keys())
+        
+        #更新index2users和users2index，如果有新的使用者，就新增到index2users和users2index
         for new_user in new_users:
             bottom_mid = [cur_finded_users[new_user][0], cur_finded_users[new_user][1]]
             w_and_h = [cur_finded_users[new_user][2], cur_finded_users[new_user][3]]
+            #如果有新的使用者，就建立一個新的tracker放進self.trackers
+            #self.trackers的index跟self.index2users是一樣的，同index對應到同一個使用者
+            #差別是self.trackers會對應到使用者的tracker，self.index2users只是對應到使用者的名稱
             self.trackers.append(KalmanBoxTracker(convert_bottonmid_wh_to_bbox(bottom_mid, w_and_h)[:]))
             self.index2users.append(new_user)
             self.users2index[new_user] = len(self.trackers)-1
 
         self.finded_users = cur_finded_users.copy()
     
+    #因為之後要建立一個新的檢測和行人的IOU矩陣，矩陣的每個row index代表一個新的檢測(行人)
+    #所以要建立一個index2new_det來對應矩陣的row index和detect.py中行人在new_det的index
+    #index2new_det是一個list，index是矩陣的row index，value是detect.py中行人在new_det的index
     def build_index2new_det(self, new_det):
         self.index2new_det.clear()
         for i in range(len(new_det)):
             *xyxy, conf, cls, match_key = new_det[i]
+            #cls=0代表檢測到的是行人，所以只留下行人的index
             if(int(cls) == 0):
                 self.index2new_det.append(i)
-   
+    
+    #方便之後建立使用者和行人的IOU矩陣，建立self.trks 
+    #self.trks是一個numpy array，每一個index代表一個tracker
+    #self.trks的index跟self.trackers和self.index2users的index是一樣的，同index對應到同一個使用者 
     def build_trks(self):
         self.trks = np.zeros((len(self.trackers), 5))
         for t, trk in enumerate(self.trks):
             pos = self.trackers[t].predict()[0]
             trk[:] = [pos[0], pos[1], pos[2], pos[3], 0]
 
+    #方便之後建立使用者和行人的IOU矩陣，建立self.dets
+    #self.dets是一個list，每一個index代表一個行人
+    #self.dets的index跟self.index2new_det的index是一樣的，同index對應到同一個行人
     def build_dets(self, new_det):
         self.dets.clear()
         for index in self.index2new_det:
             *xyxy, conf, cls, match_key = new_det[index]
             self.dets.append([xyxy[0], xyxy[1], xyxy[2], xyxy[3], 0])
     
+    #建立使用者和行人IOU矩陣
     def iou_batch(self, re_id_matched, detections, trackers):
 
         matched_det = [m[0] for m in re_id_matched]
@@ -160,7 +181,7 @@ class KalmanTrack(object):
         if len(self.index2new_det) != 0 and len(self.index2users) != 0:
             for i in range(len(self.index2new_det)):
                 for j in range(len(self.index2users)):
-                    #*xyxy, conf, cls, match_key = new_det[self.index2new_det[i]]
+                    
                     if i not in matched_det and j not in matched_users:
                         x1_box1, y1_box1, x2_box1, y2_box1 = detections[i][0], detections[i][1], detections[i][2], detections[i][3]
                         x1_box2, y1_box2, x2_box2, y2_box2 = trackers[j][0], trackers[j][1], trackers[j][2], trackers[j][3]

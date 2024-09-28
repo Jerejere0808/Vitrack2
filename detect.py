@@ -185,7 +185,7 @@ def detect(reid_cfg, save_img=True):
 
     # ---------IMU---------
     fps_count = 0
-    imu_dataset = IMU_Dataset("IMU\\IMU_DATA\\test4\\deviate.csv")
+    imu_dataset = IMU_Dataset("IMU\\IMU_DATA\\test5\\obstacle.csv")
     imu_t = time.time()
     imu_data = {"user1":0}
     north_ori = [340, 160, 340]
@@ -573,8 +573,8 @@ def detect(reid_cfg, save_img=True):
                                 # 顯示資訊的部分
                                 draw_obstacle(im0, obstacles_angle)
                                 
-                                if cv2.pointPolygonTest(safe_bound, user_location, 1) < 0:
-                                    draw_corrected_angle(im0, corrected_angle, user_location)     
+                                #if cv2.pointPolygonTest(safe_bound, user_location, 1) < 0:
+                                    #draw_corrected_angle(im0, corrected_angle, user_location)     
                                     
 
                                 #確認handover
@@ -620,7 +620,7 @@ def detect(reid_cfg, save_img=True):
                             label = f'{names[int(cls)]} {conf:.2f}'
                             if int(cls) == 0 and match_key != None:
                                 #plot_one_box(xyxy, im0, label=f'ViTrack2 User {imu_data["user1"]} {orientation}', color=[0, 0, 255], line_thickness=3)
-                                plot_one_box(xyxy, im0, label=f'ViTrack2 user {imu_data["user1"]}', color=[0, 0, 255], line_thickness=3)
+                                plot_one_box(xyxy, im0, label=f'User', color=[0, 0, 255], line_thickness=3)
                             elif int(cls) != 0:
                                 plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
                             else:
